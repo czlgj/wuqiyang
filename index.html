@@ -24,6 +24,7 @@
     </header>
     <div class="main-container">
         <div class="article">
+            <h1></h1>
 
         </div>
         <div class="sidebar">
@@ -65,6 +66,11 @@
                 for (const related_article of result.related) {
                     $('.related-articles-lists>ul').append(`<li>${related_article.title}</li>`);
                 }
+                $('.article>h1').append(result.title);
+                for (const item of result.content.split('\n')) {
+                     $('.article').append(`<p>${item}</p>`);
+                }
+               
             }
         });
     </script>
