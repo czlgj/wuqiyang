@@ -1,0 +1,159 @@
+[{
+    "_id": "63d519999964d0a216d7d367",
+    "title": "TypeScript 类型父子级、逆变、协变、双向协变和不变 test",
+    "content": "> 我也是最近刚接触到了这些知识，文章可能有些错误，希望大佬多多指点（\n\n对于学习 TypeScript 了解类型的逆变、协变、双向协变和不变是很重要的，但你只要明白类型的父子级关系，这些概念理解起来就会容易许多，因此在讲述这些之前我们必须先学会类型的父子级关系。\n\n## 类型的父子级\n\n首先明确一个概念，对于 TypeScript 而言，只要类型结构上是一致的，那么就可以确定父子关系，这点与 Java 是不一样的（Java 必须通过 extends 才算继承）。\n\n我们可以看下面的例子:\n\n```typescript\ninterface Person {\n    name: string;\n    age: number;\n} \n\ninterface Suemor {\n    name: string;\n    age: number;\n    hobbies: string[]\n}\n```\n\n你应该可以发现这两个类型是有继承关系，此时你可以去思考到底谁是父级、谁是子级？\n\n你可能会觉得 Suemor 是 Person 的父类型（毕竟 Person 有 2 个属性，而 Suemor 有 3 个属性且包含 Person），如果是这么理解的话那就错。\n\n在类型系统中，属性更多的类型是子类型，也就是说 Suemor 是 Person 的**子类型**。\n\n因为这是反直觉的，你可能很难理解（我当时也理解不了），你可以尝试这样去理解：**因为 A extends B , 于是 A 就可以去扩展 B 的属性，那么 A 的属性往往会比 B 更多，因此 A 就是子类型**。或者你记住一个特征，**子类型比父类型更加具体**。\n\n另外判断联合类型父子关系的时候， 'a' | 'b' 和 'a' | 'b' | 'c' 哪个更具体？\n\n'a' | 'b' 更具体，所以 'a' | 'b' 是 'a' | 'b' | 'c' 的子类型。\n\n## 协变\n\n### 对象中运用\n\n协变理解起来很简单，你可能在平日里开发经常用到，例如:\n\n```typescript\ninterface Person {\n    name: string;\n    age: number;\n} \n\ninterface Suemor {\n    name: string;\n    age: number;\n    hobbies: string[]\n}\n\nlet person: Person = { // 父级\n    name: '',\n    age: 20\n};\nlet suemor: Suemor = { // 子级\n    name: 'suemor',\n    age: 20,\n    hobbies: ['play game', 'codeing']\n};\n\n//正确\nperson = suemor;\n//报错，如果你的编辑器没有报错，请打开严格模式，至于为什么后面双向协变会讲\nsuemor = person;\n\n```\n\n这俩类型不一样，但是 suemor 却可以赋值给 person，也就是子级可以赋值给父级，反之不行（至于为什么，你可以想想假如 person 能够正确赋值给 suemor，那么调用 `suemor.hobbies`你的程序就坏掉了）。\n\n因此得出结论: **子类型可以赋值给父类型的情况就叫做协变。**\n\n### 函数中运用\n\n同样的函数中也可以用到协变，例如:\n\n```typescript\ninterface Person { \n  name: string;\n  age: number;\n}\n\nfunction fn(person: Person) {} // 父级\n\nconst suemor = { // 子级\n  name: \"suemor\",\n  age: 19,\n  hobbies: [\"play game\", \"codeing\"],\n};\n\nfn(suemor);\n\nfn({\n  name: \"suemor\",\n  age: 19,\n  // 报错\n  // 这里补充个知识点（因为当时我学的时候脑抽了），这里的 hobbies 会报错，是因为它是直接赋值，并没有类型推导。\n  hobbies: [\"play game\", \"codeing\"] \n})\n\n```\n\n这里我们多给一个 hobbies，同理因为协变，子类型可以赋值给父类型。\n\n因此我们平日的`redux`，在声明 `dispatch` 类型的时候，可以这样去写:\n\n```typescript\ninterface Action {\n  type: string;\n}\n\nfunction dispatch<T extends Action>(action: T) {\n\n}\n\ndispatch({\n  type: \"suemor\",\n  text:'测试'\n});\n```\n\n这样约束了传入的参数一定是 `Action` 的子类型，也就是说必须有 `type`，其他的属性有没有都可以。\n\n### 双向协变\n\n我们再看一下上上节的例子:\n\n```typescript\ninterface Person {\n    name: string;\n    age: number;\n} \n\ninterface Suemor {\n    name: string;\n    age: number;\n    hobbies: string[]\n}\n\nlet person: Person = { // 父级\n    name: '',\n    age: 20\n};\nlet suemor: Suemor = { // 子级\n    name: 'suemor',\n    age: 20,\n    hobbies: ['play game', 'codeing']\n};\n\n//正确\nperson = suemor;\n//报错 -> 设置双向协变可以避免报错\nsuemor = person;\n```\n\n`suemor = person`的报错我们可以在 `tsconfig.json`设置 `strictFunctionTypes:false`或者关闭严格模式，此时我们父类型可以赋值给子类型，子类型可以赋值给父类型，这种情况我们便称为**双向协变**。\n\n因此双向协变就是: **父类型可以赋值给子类型，子类型可以赋值给父类型**。\n\n但是这明显是有问题的，不能保证类型安全，因此我们一般都会打开严格模式，避免出现双向协变。\n\n## 不变\n\n不变是最简单的。如果没有继承关系（A 和 B 没有一方包含对方全部属性）那它就是不变，因此非父子类型之间只要类型不一样就会报错:\n\n```typescript\ninterface Person {\n  name: string;\n  age: number;\n}\n\ninterface Suemor {\n  name: string;\n  sex:boolean\n}\n\nlet person: Person = {\n  name: \"\",\n  age: 20,\n};\n\nlet suemor: Suemor = {\n  name: 'suemor',\n  sex:true\n};\n\n// 报错\nperson = suemor;\n```\n\n## 逆变\n\n逆变相对难理解一点，看下方例子:\n\n```typescript\nlet fn1: (a: string, b: number) => void = (a, b) => {\n  console.log(a);\n};\nlet fn2: (a: string, b: number, c: boolean) => void = (a, b, c) => {\n  console.log(c);\n};\n\nfn1 = fn2; // 报错\nfn2 = fn1; // 这样可以\n```\n\n你会发现：fn1 的参数是 fn2 的参数的父类型，那为啥能赋值给子类型？\n\n这就是逆变，父类型可以赋值给子类型，函数的参数有逆变的性质（而返回值是协变的，也就是子类型可以赋值给父类型）。\n\n至于为什么，如果`fn1 = fn2`是正确的话，我们只能传入`fn1('suemor',123)`，但 `fn1`调却要输出 `c`，那就坏掉了。\n\n因此我感觉逆变一般会出现在: 父函数参数与子函数参数之间赋值的时候（注意是函数与函数之间，而不是调用函数的时候，我是这么理解的，不知道对不对）。\n\n因为逆变相对在类型做运算时用的会多一点，因此我们再看一个稍微难一点例子:\n\n```typescript\n// 提取返回值类型\ntype GetReturnType<Func extends Function> = Func extends (\n  ...args: unknown[]\n) => infer ReturnType\n  ? ReturnType\n  : never;\n\ntype ReturnTypeResullt = GetReturnType<(name: string) => \"suemor\">;\n```\n\n![image-20230203205737963](https://y.suemor.com/imagesimage-20230203205737963.png)\n\n这里`GetReturnType`使用来提取返回值类型，这里`ReturnTypeResullt`原本应当是`suemor`，但如上代码却得出结果为`never`。\n\n因为函数参数遵循逆变，也就是只能父类型赋值给子类型，但很明显这里的 `unknown` 是 `{name: string}` 的父类型，所以反了，应该把`unknown`改为`string`的子类型才行，所以应该把 unknown 改为`any或者never`，如下为正确答案:\n\n```typescript\ntype GetReturnType<Func extends Function> = Func extends (\n  ...args: any[]\n) => infer ReturnType\n  ? ReturnType\n  : never;\n\ntype ReturnTypeResullt = GetReturnType<(name: string) => \"suemor\">;\n```\n\n![image-20230203205711934](https://y.suemor.com/imagesimage-20230203205711934.png)\n",
+    "tags": [
+        "TypeScript",
+        "体操"
+    ],
+    "category": {
+        "_id": "63d11a4f8133ca7fb1fb8bac",
+        "name": "前端123",
+        "slug": "front",
+        "created": "2023-01-25T12:02:23.670Z"
+    },
+    "created": "2023-01-28T12:48:25.246Z",
+    "updatedAt": "2023-07-02T00:35:05.945Z",
+    "user": {
+        "_id": "63cca56b104de64c5f01efd9",
+        "username": "admin",
+        "admin": true,
+        "created": "2023-01-22T02:54:35.217Z",
+        "avatar": "https://y.suemor.com/imagesavatar.jpeg",
+        "introduce": "学生"
+    },
+    "ad": false,
+    "read": 2056,
+    "cover": "https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d8e846843c5a46b482390f711af6127e~tplv-k3u1fbpfcp-zoom-crop-mark:3024:3024:3024:1702.awebp?",
+    "id": "63d519999964d0a216d7d367",
+    "related": [
+        {
+            "_id": "63f3a0d647383ff26f1a87d8",
+            "title": "新年伊始，2月更文带你在技术写作之路「兔飞猛进」｜ 掘金日新计划",
+            "read": 102,
+            "category": "63d11a4f8133ca7fb1fb8bac"
+        },
+        {
+            "_id": "63f3a38f47383ff26f1a888c",
+            "title": "初学Vue3",
+            "read": 65,
+            "category": "63d11a4f8133ca7fb1fb8bac"
+        },
+        {
+            "_id": "63f39b8147383ff26f1a8382",
+            "title": "初识 Nuxt3",
+            "read": 45,
+            "category": "63d11a4f8133ca7fb1fb8bac"
+        },
+        {
+            "_id": "63f39945572a6af110c01469",
+            "title": "封装一个字典函数",
+            "read": 32,
+            "category": "63d11a4f8133ca7fb1fb8bac"
+        },
+        {
+            "_id": "63f39a20572a6af110c01504",
+            "title": "React 中的 memo、useMemo及useCallback",
+            "read": 29,
+            "category": "63d11a4f8133ca7fb1fb8bac"
+        },
+        {
+            "_id": "63f39ae447383ff26f1a8335",
+            "title": "JavaScript 的宏任务与微任务",
+            "read": 20,
+            "category": "63d11a4f8133ca7fb1fb8bac"
+        },
+        {
+            "_id": "63f399a1572a6af110c014de",
+            "title": "React + Vite 搭建一个简单的组件库",
+            "read": 11,
+            "category": "63d11a4f8133ca7fb1fb8bac"
+        },
+        {
+            "_id": "63f3a36747383ff26f1a8874",
+            "title": "重学CSS",
+            "read": 9,
+            "category": "63d11a4f8133ca7fb1fb8bac"
+        },
+        {
+            "_id": "63f3a37c47383ff26f1a8880",
+            "title": "Vue3使用TSX",
+            "read": 4,
+            "category": "63d11a4f8133ca7fb1fb8bac"
+        },
+        {
+            "_id": "63f39840572a6af110c0143c",
+            "title": "TypeScript 模式匹配",
+            "read": 3,
+            "category": "63d11a4f8133ca7fb1fb8bac"
+        }
+    ]
+},
+{
+    "data": [
+        {
+            "_id": "63e23830f53e825ad189e1a8",
+            "title": "首页",
+            "created": "2023-02-07T11:38:24.083Z",
+            "updatedAt": "2023-02-07T11:56:07.215Z",
+            "tag": ""
+        },
+        {
+            "_id": "63e23c9e1f383f0276e7ee1b",
+            "title": "沸点123",
+            "created": "2023-02-07T11:57:18.116Z",
+            "updatedAt": "2023-03-07T07:48:23.409Z",
+            "slug": "pins"
+        },
+        {
+            "_id": "63e23d0bd355cd6d925598e3",
+            "title": "课程",
+            "slug": "course",
+            "created": "2023-02-07T11:59:07.945Z",
+            "updatedAt": "2023-02-07T11:59:07.945Z"
+        },
+        {
+            "_id": "63e23d18d355cd6d925598e7",
+            "title": "直播",
+            "slug": "live",
+            "created": "2023-02-07T11:59:20.339Z",
+            "updatedAt": "2023-02-07T11:59:20.339Z"
+        },
+        {
+            "_id": "63e23d28d355cd6d925598eb",
+            "title": "活动",
+            "slug": "events",
+            "created": "2023-02-07T11:59:36.332Z",
+            "updatedAt": "2023-02-07T11:59:36.332Z"
+        },
+        {
+            "_id": "63e23d37d355cd6d925598ef",
+            "title": "竞赛",
+            "slug": "challenge",
+            "created": "2023-02-07T11:59:51.071Z",
+            "updatedAt": "2023-02-07T11:59:51.071Z"
+        },
+        {
+            "_id": "63e23d72d355cd6d92559901",
+            "title": "商店",
+            "slug": "https://detail.youzan.com/show/goods/newest?kdt_id=104340304",
+            "created": "2023-02-07T12:00:50.846Z",
+            "updatedAt": "2023-02-07T12:00:50.846Z"
+        },
+        {
+            "_id": "63e23d92d355cd6d92559905",
+            "title": "APP",
+            "tag": "邀请有礼",
+            "slug": "https://juejin.cn/app?utm_source=jj_nav",
+            "created": "2023-02-07T12:01:22.686Z",
+            "updatedAt": "2023-02-07T12:01:22.686Z"
+        },
+        {
+            "_id": "63e23da4d355cd6d92559909",
+            "title": "插件",
+            "slug": "https://juejin.cn/extension?utm_source=jj_nav",
+            "created": "2023-02-07T12:01:40.198Z",
+            "updatedAt": "2023-02-07T12:01:40.198Z"
+        }
+    ]
+}]

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-container">
+            <a class="logo">
+                <img src="https://lf3-cdn-tos.bytescm.com/obj/static/xitu_juejin_web/e08da34488b114bd4c665ba2fa520a31.svg"
+                    class="logo-img">
+            </a>
+            <div class="menu-bar">
+                <ul class="menu">
+
+                </ul>
+            </div>
+        </div>
+    </header>
+    <div class="main-container">
+        <div class="article">
+
+        </div>
+        <div class="sidebar">
+            <div class="author">
+                <a>
+                    <p class="name"></p>
+                    <p class="introduce"></p>
+                </a>
+            </div>
+            <div class="related-articles">
+                <p>相关文章</p>
+                <div class="related-articles-lists">
+                    <ul>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="jquery-3.7.0.js"></script>
+    <script>
+        $.ajax({
+            url: 'https://api-juejin.suemor.com/api/v1/tab',
+            dataType: 'json',
+            success: (result) => {
+                for (const key of result.data) {
+                    $('.menu').append(`<li class="menu-link-item"><a href="${key.slug}">${key.title}</a></li>`);
+                }
+            }
+        });
+        $.ajax({
+            url: 'https://api-juejin.suemor.com/api/v1/post/63d519999964d0a216d7d367',
+            dataType: 'json',
+            success: (result) => {
+                console.log(result.user);
+                $('.author').prepend(`<img src="${result.user.avatar}">`);
+                $('.name').append(result.user.username);
+                $('.introduce').append(result.user.introduce);
+                for (const related_article of result.related) {
+                    $('.related-articles-lists>ul').append(`<li>${related_article.title}</li>`);
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
