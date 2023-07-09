@@ -175,7 +175,7 @@ body {
 
 .mag,
 .text-content-all {
-    line-height: 40px;
+    line-height: 50px;
     color: #6f6f71;
 }
 
@@ -188,5 +188,5 @@ body {
 }
 .content-img {
     position: relative ;
-    right: 100px;
+    right: 130px;
 }
