@@ -1,3 +1,4 @@
 # 每周测试 代码
 
-1. 测试1代码 [./t1/index.html](./t1/index.html)   测试网页 http://www.wuqingyuan.top/wuqiyang/t1/index.com
+1. 测试1代码 [./t1/index.html](./t1/index.html)  
+1. 测试w代码 [./t2/index.html](./t2/index.html)  
