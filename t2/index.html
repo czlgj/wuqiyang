@@ -4,27 +4,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../jquery-3.7.0.js"></script>
+    <link rel="stylesheet" href="style.css">
     <title></title>
 </head>
 
 <body>
-    <div class="root">
-        <div class="">
-            <div class="">
-                
+    <header class="headers">
+        <div class="header">
+            <div class="header-container">
+                <a class="logo">
+                    <img src="https://lf3-cdn-tos.bytescm.com/obj/static/xitu_juejin_web/e08da34488b114bd4c665ba2fa520a31.svg"
+                        class="logo-img">
+                </a>
+                <div class="menu-bar">
+                    <ul class="menu">
+
+                    </ul>
+                </div>
             </div>
         </div>
-        <div class="">
-            <div class="">
+        <div class="header">
+            <div class="sub-header-container">
+                <div class="sub-menu-bar">
+                    <ul class="sub-menu">
 
+                    </ul>
+                </div>
             </div>
         </div>
-        <div class="">
-            <div class="">
+    </header>
+    <div class="main-container">
+        <div class="datalist">
+            <ul>
+                <li class="datalist-item"><samp>推荐</samp></li>
 
+            </ul>
+        </div>
+        <div class="sidebar">
+            <div class="advertisement">
+            </div>
+            <div class="downloadapp">
+                <img width="70" height="70" src="./xz.png"></img>
+                <div>
+                    <a id="title">下载稀土掘金 APP</a>
+                    <a id="subtitle">一个帮助开发者成长的社区</a>
+                </div>
+            </div>
+            <div class="related-authors">
+                作者榜
+                <div class="related-authors-lists">
+                    <ul>
+
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
+    <script src="../jquery-3.7.0.js"></script>
+    <script>
+        $.ajax({
+            url: 'https://api-juejin.suemor.com/api/v1/tab',
+            dataType: 'json',
+            success: (result) => {
+                for (const key of result.data) {
+                    $('.menu').append(`<a href="${key.slug}"><li class="menu-link-item">${key.title}</li></a>`);
+                }
+            }
+        });
+        $.ajax({
+            url: 'https://api-juejin.suemor.com/api/v1/aggregate/home/3',
+            dataType: 'json',
+            success: (result) => {
+                console.log(result);
+                for (const key of result.category) {
+                    $('.sub-menu').append(`<a id="${key.slug}" href="#${key.slug}"><li class="menu-link-item">${key.name}</li></a>`);
+                }
+                $('.advertisement').append(`<a href="${result.ad.adHref}">
+                    <img width="100%" height="100%" style="margin-bottom: 10px;margin-top: 10px;" src="${result.ad.phoUrl}"></img>
+                    </a>`);
+                for (const key of result.authorRank) {
+                    $('.related-authors-lists>ul').append(`<a href="${key.slug}">
+                            <li class="related-authors-list">
+                                <img width="70" height="70" style="border-radius:50%;margin-right: 10px;" src="${key.avatar}"></img>
+                                <p>
+                                <a id="name">${key.username}</a>
+                                <a id="id">${key.username}</a>
+                                </p>
+                            </li>
+                        </a>`);
+                }
+            }
+        });
+        $.ajax({
+            url: 'https://api-juejin.suemor.com/api/v1/post?pageCurrent=1&pageSize=15',
+            dataType: 'json',
+            success: (result) => {
+                console.log(result);
+                for (const key of result.postList) {
+                    let tags = "";
+                    for (let i = 0; i < key.tags.length; i++) {
+                        if (i == key.tags.length - 1) {
+                            tags += key.tags[i];
+                        } else {
+                            tags += key.tags[i] + "·";
+                        }
+                    }
+                    let cover = ''
+                    if (key.cover != undefined) {
+                        cover = `<img class="content-img" src="${key.cover}" height="70" width="100">`
+                    }
+                    $('.datalist>ul').append(`
+                    <li class="datalist-item">
+                        <div class="mag"><strong>${key.user.username}</strong>|${key.updatedAt}|${tags}</div>
+                        <div class="content">
+                            <div class="text-content">
+                                <p>${key.title}</p>
+                                <p class="text-content-all">${key.content}</p>
+                            </div>
+                            ${cover}
+                        </div>
+                    </li>
+                    `);
+                }
+            }
+        });
+    </script>
 </body>
 
 </html>
